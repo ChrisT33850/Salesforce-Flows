@@ -1,0 +1,180 @@
+graph TD
+    Start([🚀 START: Need a Salesforce Flow]) --> Decision{What's the task?}
+    
+    %% MAIN DECISION
+    Decision -->|Create/Modify Flow| CirraEntry["PHASE 1️⃣: CRÉATION"]
+    Decision -->|Already have metadata| GitEntry["PHASE 2️⃣: VERSION CONTROL"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PHASE 1: CIRRA AI - CRÉATION
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    CirraEntry --> CirraStart["🤖 CIRRA AI<br/>═══════════════"]
+    CirraStart --> UserDescribe["👤 YOU DESCRIBE:<br/>Natural Language Request<br/>═════════════════════<br/>Example:<br/>Create a Flow for Case Intake<br/>Add Account lookup REQUIRED<br/>Add EndUser lookup OPTIONAL<br/>Map Contact fields"]
+    
+    UserDescribe --> CirraAnalyze["🔍 CIRRA ANALYZES<br/>═══════════════════<br/>├─ Understands requirements<br/>├─ Designs Flow structure<br/>├─ Plans components<br/>└─ Creates execution plan"]
+    
+    CirraAnalyze --> CirraExecute["⚡ CIRRA EXECUTES<br/>═══════════════════<br/>├─ ✅ Create Flow<br/>├─ ✅ Add flowruntime:lookup<br/>├─ ✅ Configure parameters<br/>├─ ✅ Create variables<br/>├─ ✅ Update formulas<br/>├─ ✅ Link components<br/>├─ ✅ Validate logic<br/>└─ ✅ Generate metadata"]
+    
+    CirraExecute --> GenerateXML["📦 GENERATE METADATA<br/>═══════════════════<br/>File: Screen_Sub_Case_Intake_Core.flow-meta.xml<br/><br/>Contains:<br/>├─ Account_Lookup_Contact<br/>│  ├─ fieldApiName: Account__c<br/>│  ├─ objectApiName: Contact<br/>│  ├─ isRequired: true<br/>│  └─ storeOutputAutomatically: true<br/>│<br/>├─ EndUser_Lookup_Optional<br/>│  ├─ fieldApiName: account<br/>│  ├─ objectApiName: Account<br/>│  ├─ isRequired: false<br/>│  └─ storeOutputAutomatically: true<br/>│<br/>├─ Create_Contact<br/>│  └─ Maps Account__c<br/>│<br/>└─ All formulas & conditions updated"]
+    
+    GenerateXML --> CirraDoc["📝 AUTO-DOCUMENTATION<br/>═════════════════════<br/>├─ Change log<br/>├─ Component descriptions<br/>├─ Variable mappings<br/>└─ Testing recommendations"]
+    
+    CirraDoc --> CirraTime["⏱️ TOTAL TIME: 15 minutes<br/>vs 2 hours manual"]
+    
+    CirraTime --> GitEntry
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PHASE 2: GITHUB - VERSION CONTROL
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    GitEntry --> GitStart["📚 GITHUB<br/>═══════════════"]
+    GitStart --> GitSetup["🔧 GIT SETUP<br/>═════════════<br/>Create branch:<br/>feature/case-intake-v3"]
+    
+    GitSetup --> GitAdd["📝 ADD FILES<br/>════════════<br/>Add to repository:<br/>unpackaged/main/default/flows/<br/>Screen_Sub_Case_Intake_Core.flow-meta.xml"]
+    
+    GitAdd --> GitCommit["💾 COMMIT<br/>══════════<br/>Message:<br/>feat: Add/Update Case Intake Flow<br/><br/>Details:<br/>- Add Account lookup (required)<br/>- Add EndUser lookup (optional)<br/>- Update all references<br/>- Improve error handling"]
+    
+    GitCommit --> GitPush["🚀 PUSH TO GITHUB<br/>═════════════════<br/>Push branch feature/case-intake-v3<br/>to origin"]
+    
+    GitPush --> GitPR["📋 CREATE PULL REQUEST<br/>════════════════════<br/>Title: Add/Update Case Intake Flow<br/>Description: [Details]<br/>Reviewers: [Team]"]
+    
+    GitPR --> CodeReviewStart{Code Review<br/>Process}
+    
+    %% CODE REVIEW LOOP
+    CodeReviewStart -->|❌ Needs Changes| ReviewFeedback["📢 FEEDBACK RECEIVED<br/>═══════════════════<br/>Example Comments:<br/>- 'Make Account optional'<br/>- 'Add validation for email'<br/>- 'Update documentation'"]
+    
+    ReviewFeedback --> ModifyFlow["🔧 MODIFY FLOW<br/>═══════════════<br/>Cirra AI updates based on feedback:<br/>├─ Change Account to optional<br/>├─ Add email validation<br/>└─ Update documentation"]
+    
+    ModifyFlow --> NewCommit["💾 NEW COMMIT<br/>═══════════════<br/>Message:<br/>fix: Address code review feedback<br/><br/>- Make Account optional<br/>- Add validation<br/>- Update docs"]
+    
+    NewCommit --> GitPush
+    
+    %% CODE REVIEW APPROVED
+    CodeReviewStart -->|✅ Approved| Approved["✅ APPROVED<br/>═════════════<br/>Review status: Approved<br/>All checks pass"]
+    
+    Approved --> GitMerge["🔀 MERGE TO MAIN<br/>═════════════════<br/>Merge feature/case-intake-v3<br/>into main branch<br/><br/>Status:<br/>✅ Code is now in MAIN<br/>✅ Ready for deployment<br/>✅ Version control complete"]
+    
+    GitMerge --> GitTime["⏱️ TOTAL TIME: 30-60 minutes<br/>including code review cycle"]
+    
+    GitTime --> GearsetEntry["PHASE 3️⃣: DEPLOYMENT"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PHASE 3: GEARSET - DEPLOYMENT
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    GearsetEntry --> GearsetStart["🚀 GEARSET DEPLOY<br/>═══════════════════"]
+    GearsetStart --> GearsetDetect["🔍 GEARSET DETECTS CHANGE<br/>═══════════════════════<br/>Detects merge in GitHub main<br/>Initiates deployment workflow"]
+    
+    GearsetDetect --> DeploySandbox["🧪 DEPLOY TO SANDBOX<br/>════════════════════<br/>├─ Download metadata from GitHub<br/>├─ Validate XML syntax<br/>├─ Check dependencies<br/>├─ Compile metadata<br/>├─ Deploy to Sandbox org<br/>└─ ✅ Sandbox ready for testing"]
+    
+    DeploySandbox --> SandboxTest{Test Results<br/>in Sandbox?}
+    
+    %% SANDBOX TEST FAILED
+    SandboxTest -->|❌ Test Failed| SandboxIssue["❌ ISSUE FOUND<br/>══════════════<br/>Example Errors:<br/>├─ Lookup not working<br/>├─ Variable missing<br/>├─ Formula error<br/>└─ Mapping incorrect"]
+    
+    SandboxIssue --> BackToCirra["⬅️ BACK TO PHASE 1<br/>════════════════<br/>Cirra AI fixes the issue<br/>├─ Update Flow logic<br/>├─ Fix configuration<br/>└─ New version to GitHub"]
+    
+    BackToCirra --> GitAdd
+    
+    %% SANDBOX TEST PASSED
+    SandboxTest -->|✅ All Pass| TestComplete["✅ SANDBOX TESTING COMPLETE<br/>════════════════════════<br/>All scenarios tested:<br/>├─ Create Contact with Account ✅<br/>├─ Select EndUser optional ✅<br/>├─ Error handling ✅<br/>├─ Data integrity ✅<br/>└─ User acceptance test ✅"]
+    
+    TestComplete --> ProdDeploy["🌍 DEPLOY TO PRODUCTION<br/>════════════════════════<br/>├─ Package metadata<br/>├─ Generate change set<br/>├─ Deploy to Production org<br/>├─ Verify deployment<br/>├─ Flow is LIVE<br/>└─ ✅ Users can access it"]
+    
+    ProdDeploy --> GearsetTime["⏱️ TOTAL TIME: 2 hours<br/>including Sandbox testing"]
+    
+    GearsetTime --> MonitorEntry["PHASE 4️⃣: MONITORING"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PHASE 4: GEARSET - MONITORING & DEBUGGING
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    MonitorEntry --> MonitorStart["📊 GEARSET MONITORING<br/>═══════════════════════"]
+    MonitorStart --> MonitorSetup["⚙️ CONFIGURE MONITORING<br/>═════════════════════<br/>├─ Enable Flow Error Monitoring<br/>├─ Set up email alerts<br/>├─ Configure Slack channel<br/>├─ Select Flows to monitor<br/>├─ Set thresholds<br/>└─ ✅ Monitoring ACTIVE"]
+    
+    MonitorSetup --> Production["🎬 FLOW IN PRODUCTION<br/>═══════════════════════<br/>Users execute the Flow<br/>Gearset tracks all executions"]
+    
+    Production --> ExecutionPath{Flow<br/>Execution<br/>Result}
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% SUCCESS PATH - MONITORING
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    ExecutionPath -->|✅ SUCCESS| SuccessExec["✅ FLOW EXECUTES SUCCESSFULLY<br/>═══════════════════════════════<br/>User Action:<br/>1. Starts Flow<br/>2. Fills in details<br/>3. Selects Account (required)<br/>4. Optionally selects EndUser<br/>5. Completes Contact creation<br/>6. Case created successfully<br/><br/>Data Created:<br/>✅ Contact with Account link<br/>✅ Case with all details<br/>✅ Relationships intact"]
+    
+    SuccessExec --> SuccessLog["📈 GEARSET LOGS SUCCESS<br/>═══════════════════════<br/>Dashboard shows:<br/>├─ Execution timestamp<br/>├─ User who ran it<br/>├─ Duration<br/>├─ Records created<br/>└─ Status: ✅ SUCCESS"]
+    
+    SuccessLog --> Analytics["📊 ANALYTICS & TRENDS<br/>═══════════════════<br/>Gearset dashboard displays:<br/>├─ Total executions: 42<br/>├─ Success rate: 98.5%<br/>├─ Avg execution time: 2.3s<br/>├─ Peak usage time: 10-11am<br/>└─ No errors this week ✅"]
+    
+    Analytics --> Monitor["Continue Monitoring..."]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% ERROR PATH - DEBUGGING
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    ExecutionPath -->|❌ ERROR| ErrorExec["❌ FLOW FAILS<br/>═══════════════<br/>Execution stopped at:<br/>Account_Lookup_Contact<br/><br/>Error Details:<br/>├─ Type: Required field error<br/>├─ Message: 'Account is required'<br/>├─ User: john@company.com<br/>├─ Time: 2025-09-09 14:32:15<br/>├─ Interview ID: 3011X000XYZ<br/>└─ Data partially created"]
+    
+    ErrorExec --> Alert["📲 GEARSET ALERT TRIGGERED<br/>════════════════════════<br/>⏱️ IMMEDIATE (Real-time)<br/><br/>CHANNEL 1: EMAIL<br/>├─ Subject: 🚨 Flow Error<br/>├─ Flow: Screen_Sub_Case_Intake_Core<br/>├─ Failed element: Account_Lookup<br/>├─ Error: Required field missing<br/>├─ User affected: john@company.com<br/>├─ Impact: Case creation blocked<br/>└─ [Debug] [Rollback] [View Details]<br/><br/>CHANNEL 2: SLACK<br/>├─ Channel: #flow-errors<br/>├─ 🚨 Alert posted<br/>├─ All details included<br/>├─ Buttons: Debug, Rollback<br/>└─ Notifies team members<br/><br/>CHANNEL 3: GEARSET DASHBOARD<br/>├─ Error counted<br/>├─ Timeline updated<br/>└─ Alerts tab shows new error"]
+    
+    Alert --> AlertReceived["👁️ TEAM SEES ALERT<br/>═══════════════════<br/>Alert appears in:<br/>├─ Email inbox (yours)<br/>├─ Slack channel (team)<br/>└─ Gearset dashboard (live)"]
+    
+    AlertReceived --> DebugDecision{Take Action}
+    
+    %% DEBUG OPTION
+    DebugDecision -->|Debug| DebugAction["🔧 DEBUG THE ERROR<br/>═══════════════════<br/>Option A: Via Gearset alert<br/>├─ Click [Debug] button<br/>├─ Gearset opens Flow Builder<br/>├─ Shows error location<br/>└─ Displays interview details<br/><br/>Option B: Via Flow Builder<br/>├─ Open Flow in Salesforce<br/>├─ Look at recent executions<br/>├─ Click interview to debug<br/>└─ See variable values"]
+    
+    DebugAction --> Diagnose["🔍 DIAGNOSE THE PROBLEM<br/>═════════════════════<br/>Gearset shows you:<br/>├─ Interview timeline<br/>├─ All executed steps<br/>├─ Variable values at failure<br/>├─ Error message<br/>├─ Failed element details<br/>└─ Elements NOT executed (stopped here)<br/><br/>Example display:<br/>Step 1: Start ✅<br/>Step 2: Get_BU ✅<br/>Step 3: Screen_Case_Details ✅<br/>Step 4: Account_Lookup ❌ ERROR<br/>     Error: 'Account is required'<br/>     var_AccountId = null<br/>     Account_Lookup.recordId = null<br/>Step 5-N: SKIPPED (never ran)"]
+    
+    Diagnose --> Solution["💡 IDENTIFY SOLUTION<br/>════════════════════<br/>Based on error, options:<br/>├─ Option 1: Make Account optional<br/>│  └─ Change isRequired from true to false<br/>│<br/>├─ Option 2: Add default value<br/>│  └─ If no Account selected, use default<br/>│<br/>├─ Option 3: Add validation first<br/>│  └─ Check Account exists before lookup<br/>│<br/>└─ Option 4: Change UX<br/>    └─ Show message to user first"]
+    
+    Solution --> FixFlow["🛠️ FIX THE FLOW<br/>═════════════════<br/>Cirra AI or manual fix:<br/>├─ Update Flow configuration<br/>├─ Change parameter<br/>├─ Update validation<br/>├─ Test in Sandbox<br/>└─ Deploy new version"]
+    
+    %% ROLLBACK OPTION
+    DebugDecision -->|Rollback| RollbackAction["🔄 ROLLBACK CHANGES<br/>════════════════════<br/>If data got corrupted:<br/>├─ Click [Rollback] button<br/>├─ Gearset reverts ALL changes<br/>│  ├─ Records created → Deleted<br/>│  ├─ Records updated → Restored<br/>│  └─ Fields populated → Cleared<br/>├─ Database returns to CLEAN state<br/>└─ User can retry safely<br/><br/>Result:<br/>✅ No data corruption<br/>✅ No cleanup needed<br/>✅ User can retry immediately"]
+    
+    RollbackAction --> RetryFlow["🔄 USER RETRIES<br/>═════════════════<br/>User runs the Flow again<br/>This time with fix deployed<br/>Expected: Success ✅"]
+    
+    %% REDEPLOYMENT
+    FixFlow --> Redeploy["🚀 REDEPLOY FIX<br/>═══════════════════<br/>New version deployed:<br/>├─ Push fix to GitHub<br/>├─ Code review (quick)<br/>├─ Merge to main<br/>├─ Gearset deploys to PROD<br/>├─ Monitoring resumes<br/>└─ ✅ Fix is LIVE"]
+    
+    Redeploy --> GitSync["📚 AUTO-GITHUB-SYNC<br/>═══════════════════<br/>Gearset automatically:<br/>├─ Commits change to GitHub<br/>├─ Message: 'fix: Account lookup error'<br/>├─ Pushes to main<br/>└─ Version control updated<br/><br/>GitHub audit trail shows:<br/>├─ Who made change<br/>├─ When it was made<br/>├─ What exactly changed<br/>└─ Why (commit message)"]
+    
+    GitSync --> FixVerify["✅ FIX VERIFIED<br/>═════════════════<br/>After redeploy:<br/>├─ User retries Flow<br/>├─ All steps succeed ✅<br/>├─ Records created correctly ✅<br/>├─ Gearset logs success ✅<br/>└─ Error resolved ✅"]
+    
+    FixVerify --> RootCauseAnalysis["📊 ROOT CAUSE ANALYSIS<br/>═══════════════════════<br/>Gearset helps you understand:<br/>├─ Why did this error occur?<br/>├─ Was it user mistake?<br/>├─ Was it configuration error?<br/>├─ Was it data issue?<br/>├─ How to prevent next time?<br/>└─ Document lessons learned"]
+    
+    RollbackAction --> Monitor
+    RootCauseAnalysis --> Monitor
+    
+    %% FINAL MONITORING LOOP
+    Monitor --> EndStats["📈 FINAL STATISTICS<br/>══════════════════<br/>Weekly/Monthly report:<br/>├─ Total executions: 42<br/>├─ Successful: 41 (97.6%)<br/>├─ Failed: 1 (resolved) (2.4%)<br/>├─ Avg execution time: 2.1s<br/>├─ Peak usage: Tuesday 10-11am<br/>├─ Most common error: Account missing<br/>└─ Actions taken: 1 fix deployed"]
+    
+    EndStats --> ContinueMonitor{Continue<br/>Monitoring?}
+    
+    ContinueMonitor -->|Yes - Production Active| Production
+    ContinueMonitor -->|No - End Monitoring| End([🏁 END - Flow Stable])
+    
+    %% STYLING
+    classDef phase1 fill:#9966ff,stroke:#6600cc,color:#fff,stroke-width:3px
+    classDef phase2 fill:#333,stroke:#fff,color:#fff,stroke-width:3px
+    classDef phase3 fill:#0066cc,stroke:#0044aa,color:#fff,stroke-width:3px
+    classDef phase4 fill:#ff6600,stroke:#cc4400,color:#fff,stroke-width:3px
+    classDef success fill:#00aa44,stroke:#00cc66,color:#fff,stroke-width:2px
+    classDef error fill:#cc0000,stroke:#ff0000,color:#fff,stroke-width:2px
+    classDef alert fill:#ffaa00,stroke:#ff8800,color:#000,stroke-width:2px
+    classDef decision fill:#ffff00,stroke:#ffcc00,color:#000,stroke-width:2px
+    classDef neutral fill:#999,stroke:#666,color:#fff,stroke-width:2px
+    classDef process fill:#66ccff,stroke:#0099ff,color:#000,stroke-width:2px
+    
+    class CirraEntry,CirraStart,UserDescribe,CirraAnalyze,CirraExecute,GenerateXML,CirraDoc,CirraTime phase1
+    class GitEntry,GitStart,GitSetup,GitAdd,GitCommit,GitPush,GitPR,Approved,GitMerge,GitTime phase2
+    class GearsetEntry,GearsetStart,GearsetDetect,DeploySandbox,ProdDeploy,GearsetTime phase3
+    class MonitorEntry,MonitorStart,MonitorSetup,Production,Alert,AlertReceived,DebugAction,Diagnose,Solution,Redeploy,GitSync,FixVerify,RootCauseAnalysis,Monitor,EndStats phase4
+    
+    class SuccessExec,SuccessLog,Analytics,FixFlow,RetryFlow success
+    class ErrorExec,SandboxIssue error
+    class Alert,AlertReceived alert
+    class Decision,CodeReviewStart,SandboxTest,ExecutionPath,DebugDecision,ContinueMonitor decision
+    class ReviewFeedback,ModifyFlow,NewCommit,TestComplete,BackToCirra,DebugDecision,RollbackAction neutral
+    class SuccessLog,Analytics,DebugAction,Diagnose,RootCauseAnalysis process
