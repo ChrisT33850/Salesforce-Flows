@@ -1,79 +1,69 @@
+```mermaid
 graph TD
-    START([Start]) --> GET_BU[Get BU Values<br/>Apex Action]
-    GET_BU --> CASE_DET{Screen Case Details<br/>Collect case info}
+    Start([Start]) --> GetBU["Get BU Values<br/>(Apex Action)"]
+    GetBU --> CaseScreen["Screen: Case Details<br/>(Collect case info)"]
     
-    CASE_DET --> CHK_ASSET{Asset Required?}
+    CaseScreen --> Decision1{Asset<br/>Required?}
     
-    CHK_ASSET -->|Search Asset| ASSET_SEL{Asset Selection}
-    CHK_ASSET -->|No Asset| CONTACT_CHK
+    Decision1 -->|No| ContactCheck
+    Decision1 -->|Yes| AssetPicker["Screen: Asset Picker<br/>(Search/Select)"]
     
-    ASSET_SEL -->|Type-ahead Lookup| ASSIGN_ASSET1[Assign Asset<br/>from Lookup]
-    ASSET_SEL -->|End User List| ASSIGN_ASSET2[Assign Asset<br/>from EU Pick]
-    ASSET_SEL -->|Existing Asset| SF_ROOT[Get Root Asset]
+    AssetPicker --> AssetChoice{Asset<br/>Selection?}
+    AssetChoice -->|Type-ahead| AssetLookup["Assign Asset<br/>(from Lookup)"]
+    AssetChoice -->|End User List| AssetEU["Assign Asset<br/>(from EU Pick)"]
+    AssetChoice -->|Existing| GetRootAsset["Get Root Asset"]
     
-    ASSIGN_ASSET1 --> SF_ROOT
-    ASSIGN_ASSET2 --> SF_ROOT
-    SF_ROOT --> CHK_EU{End User<br/>Required?}
+    AssetLookup --> GetRootAsset
+    AssetEU --> GetRootAsset
     
-    CHK_EU -->|From Asset| ASSIGN_EU1[Use Asset Owner<br/>as End User]
-    CHK_EU -->|Search EU| EU_SEARCH{End User Selection}
-    CHK_EU -->|No Change| CONTACT_CHK
+    GetRootAsset --> Decision2{End User<br/>Required?}
     
-    EU_SEARCH -->|Search Result| ASSIGN_EU2[Assign End User<br/>from Search]
-    EU_SEARCH -->|Optional Search| ASSIGN_EU3[Assign End User<br/>from Optional]
+    Decision2 -->|From Asset| UseOwner["Use Asset Owner<br/>as End User"]
+    Decision2 -->|Search EU| EUSearch{End User<br/>Selection?}
+    Decision2 -->|No Change| ContactCheck
     
-    ASSIGN_EU1 --> GET_OPEN_CASES[Get Open Cases<br/>for Asset]
-    ASSIGN_EU2 --> SCREEN_EU[Screen Asset<br/>End User]
-    ASSIGN_EU3 --> GET_ENDUSER[Get End User<br/>Account]
+    EUSearch -->|Search Result| AssignEU1["Assign End User<br/>(from Search)"]
+    EUSearch -->|Optional| AssignEU2["Assign End User<br/>(Optional)"]
     
-    GET_OPEN_CASES --> CONTACT_CHK
-    SCREEN_EU --> CONTACT_CHK
-    GET_ENDUSER --> CONTACT_CHK
+    UseOwner --> GetOpenCases["Get Open Cases<br/>(for Asset)"]
+    AssignEU1 --> ScreenEU["Screen: Asset<br/>End User"]
+    AssignEU2 --> GetEU["Get End User<br/>Account"]
     
-    CONTACT_CHK{Contact<br/>Source?} --> |Account Pick| ASSIGN_CONTACT1[Use Account<br/>Contact]
-    CONTACT_CHK -->|Type-ahead| ASSIGN_CONTACT2[Use Looked-up<br/>Contact]
-    CONTACT_CHK -->|Phone Match| ASSIGN_CONTACT3[Use Phone-matched<br/>Contact]
-    CONTACT_CHK -->|New Contact| CREATE_CONTACT[Create New<br/>Contact]
-    CONTACT_CHK -->|Prefilled| ASSIGN_CONTACT5[Use Prefilled<br/>Contact]
-    CONTACT_CHK -->|No Contact| NO_CONTACT[No Contact Selected]
+    GetOpenCases --> ContactCheck
+    ScreenEU --> ContactCheck
+    GetEU --> ContactCheck
     
-    ASSIGN_CONTACT1 --> GET_CONTACT[Get Chosen<br/>Contact Details]
-    ASSIGN_CONTACT2 --> GET_CONTACT
-    ASSIGN_CONTACT3 --> GET_CONTACT
-    CREATE_CONTACT --> GET_CONTACT
-    ASSIGN_CONTACT5 --> GET_CONTACT
-    NO_CONTACT --> GET_CONTACT
+    ContactCheck{Contact<br/>Source?} -->|Account| AssignCont1["Use Account<br/>Contact"]
+    ContactCheck -->|Type-ahead| AssignCont2["Use Looked-up<br/>Contact"]
+    ContactCheck -->|Phone| AssignCont3["Use Phone-matched<br/>Contact"]
+    ContactCheck -->|New| CreateContact["Create New<br/>Contact"]
+    ContactCheck -->|Prefilled| AssignCont4["Use Prefilled<br/>Contact"]
+    ContactCheck -->|None| NoContact["No Contact"]
     
-    GET_CONTACT --> POPULATE[Populate Case<br/>Fields]
+    AssignCont1 --> GetContact["Get Chosen<br/>Contact Details"]
+    AssignCont2 --> GetContact
+    AssignCont3 --> GetContact
+    CreateContact --> GetContact
+    AssignCont4 --> GetContact
+    NoContact --> GetContact
     
-    POPULATE --> CHK_VOICE{Voice Call<br/>Processing?}
+    GetContact --> PopulateFields["Populate Case<br/>Fields"]
     
-    CHK_VOICE -->|Yes| PROCESS_VOICE[Process Voice<br/>Call Record]
-    CHK_VOICE -->|No| SUMMARY
+    PopulateFields --> Decision3{Voice Call<br/>Processing?}
     
-    PROCESS_VOICE --> SUMMARY{Review Case<br/>Summary}
+    Decision3 -->|Yes| ProcessVoice["Process Voice<br/>Call Record"]
+    Decision3 -->|No| ReviewCase
     
-    SUMMARY -->|Confirm| CREATE_CASE[Create Case<br/>Record]
-    SUMMARY -->|Edit| CASE_DET
+    ProcessVoice --> ReviewCase{Review Case<br/>Summary}
     
-    CREATE_CASE --> LOG_OUTPUT[Log Case ID<br/>Output]
+    ReviewCase -->|Confirm| CreateCase["Create Case<br/>Record"]
+    ReviewCase -->|Edit| CaseScreen
     
-    LOG_OUTPUT --> SUCCESS([Case Created<br/>Success])
+    CreateCase --> LogOutput["Log Case ID<br/>(Output)"]
+    LogOutput --> Success([Success<br/>Case Created])
     
-    CASE_DET -->|Error| FAULT_HANDLER[Capture Fault<br/>Message]
-    FAULT_HANDLER --> ERROR_SCREEN[Display Error<br/>Screen]
-    ERROR_SCREEN --> END_ERROR([End with Error])
-    
-    style START fill:#90EE90
-    style SUCCESS fill:#90EE90
-    style END_ERROR fill:#FFB6C1
-    style ERROR_SCREEN fill:#FFE4E1
-    style GET_BU fill:#87CEEB
-    style CREATE_CASE fill:#FFD700
-    style SUMMARY fill:#FFFFE0
-    style CONTACT_CHK fill:#FFFFE0
-    style CHK_ASSET fill:#FFFFE0
-    style CHK_EU fill:#FFFFE0
-    style CHK_VOICE fill:#FFFFE0
-    style ASSET_SEL fill:#FFFFE0
-    style EU_SEARCH fill:#FFFFE0
+    CaseScreen -->|Error| FaultHandler["Capture Fault<br/>Message"]
+    FaultHandler --> ErrorScreen["Screen: Error<br/>Display"]
+    ErrorScreen --> End([Error<br/>End])
+
+```
