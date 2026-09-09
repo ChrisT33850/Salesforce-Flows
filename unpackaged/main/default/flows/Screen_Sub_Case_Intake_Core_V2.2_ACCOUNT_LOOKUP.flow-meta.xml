@@ -3950,7 +3950,7 @@
             <name>Input_New_Account</name>
             <dataType>SObject</dataType>
             <fieldText>Associated Account *</fieldText>
-            <fieldType>LookupObject</fieldType>
+            <fieldType>InputField</fieldType>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <objectLookupType>Account</objectLookupType>
