@@ -1,0 +1,158 @@
+graph TD
+    Start([Start]) --> GetBU["Get BU Values<br/>(Apex Action)"]
+    
+    GetBU --> GetVoiceCall["Get Voice Call<br/>Extract: CallType<br/>CallerPhone, RecipientPhone"]
+    
+    GetVoiceCall --> AssignDynamicPhone["Assign Dynamic Phone<br/>var_DynamicPhone<br/><br/>IF CallType='Inbound'<br/>  → CallerPhone<br/>ELSE → RecipientPhone"]
+    
+    AssignDynamicPhone --> CaseScreen["Screen: Case Details<br/>(Collect case info)"]
+    
+    CaseScreen --> Decision1{Asset<br/>Required?}
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PATH 1: NO ASSET - GO DIRECTLY TO END USER (REQUIRED)
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    Decision1 -->|No| Screen_EndUser_Opt_Search_NoAsset["Screen: End User<br/>Optional Search<br/>(NO ASSET PATH)<br/><br/>REQUIRED ⭐<br/>├─ Radio: Search / Create<br/>├─ Lookup (if Search)<br/>└─ Form 7 fields (if Create)"]
+    
+    Screen_EndUser_Opt_Search_NoAsset --> EndUserChoice_NoAsset{End User<br/>Choice?}
+    
+    EndUserChoice_NoAsset -->|SEARCH| SearchEU_NoAsset["Screen: EU Optional Pick<br/>Search Results"]
+    
+    SearchEU_NoAsset --> SelectEU_NoAsset["Assign End User<br/>(Selected)"]
+    
+    EndUserChoice_NoAsset -->|CREATE| CreateEU_NoAsset["Create Account<br/>RecordType: End User"]
+    
+    CreateEU_NoAsset --> AssignEU_NoAsset["Assign Account ID<br/>to var_EndUserAccountId"]
+    
+    SelectEU_NoAsset --> GetEU_NoAsset["Get End User<br/>Account"]
+    
+    AssignEU_NoAsset --> GetEU_NoAsset
+    
+    GetEU_NoAsset --> ContactCheck_NoAsset["Contact Check<br/>(Continue to Contact)"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% PATH 2: ASSET SELECTED
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    Decision1 -->|Yes| AssetPicker["Screen: Asset Picker<br/>(Search/Select)"]
+    
+    AssetPicker --> GetRootAsset["Get Root Asset<br/>Extract: Owner<br/>Owner.AccountId"]
+    
+    GetRootAsset --> CheckEUMatch{Asset Owner<br/>AccountId =<br/>Contact End User?}
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% ASSET PATH: EU MATCHES - SKIP SCREEN
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    CheckEUMatch -->|YES<br/>MATCH| SkipEUScreen["SKIP End User Screen<br/>✅ Already matched<br/><br/>var_EndUserAccountId<br/>= Asset Owner AccountId"]
+    
+    SkipEUScreen --> ContactCheck_AssetMatch["Contact Check<br/>(Continue to Contact)"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% ASSET PATH: EU DOES NOT MATCH - SHOW SCREEN
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    CheckEUMatch -->|NO<br/>MISMATCH| Screen_EndUser_Opt_Search_Asset["Screen: End User<br/>Optional Search<br/>(ASSET MISMATCH)<br/><br/>REQUIRED ⭐<br/>├─ Radio: Search / Create<br/>├─ Lookup (if Search)<br/>└─ Form 7 fields (if Create)"]
+    
+    Screen_EndUser_Opt_Search_Asset --> EndUserChoice_Asset{End User<br/>Choice?}
+    
+    EndUserChoice_Asset -->|SEARCH| SearchEU_Asset["Screen: EU Optional Pick<br/>Search Results"]
+    
+    SearchEU_Asset --> SelectEU_Asset["Assign End User<br/>(Selected)"]
+    
+    EndUserChoice_Asset -->|CREATE| CreateEU_Asset["Create Account<br/>RecordType: End User"]
+    
+    CreateEU_Asset --> AssignEU_Asset["Assign Account ID<br/>to var_EndUserAccountId"]
+    
+    SelectEU_Asset --> GetEU_Asset["Get End User<br/>Account"]
+    
+    AssignEU_Asset --> GetEU_Asset
+    
+    GetEU_Asset --> ContactCheck_Asset["Contact Check<br/>(Continue to Contact)"]
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% CONVERGENCE: ALL PATHS MERGE AT CONTACT CHECK
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    ContactCheck_NoAsset --> ContactDecision{Contact<br/>Source?}
+    
+    ContactCheck_AssetMatch --> ContactDecision
+    
+    ContactCheck_Asset --> ContactDecision
+    
+    ContactDecision -->|Account| UseAccountContact["Use Account<br/>Contact"]
+    
+    ContactDecision -->|Type-ahead| TypeaheadContact["Use Looked-up<br/>Contact"]
+    
+    ContactDecision -->|Phone| PhoneContact["Use Phone-matched<br/>Contact"]
+    
+    ContactDecision -->|New| CreateContact["Screen: Create Contact<br/><br/>NEW FIELDS:<br/>├─ Account Lookup *REQUIRED<br/>├─ Last Name *<br/>├─ Phone (AUTO-FILLED)<br/>│  └─ var_DynamicPhone ✅<br/>├─ Email<br/>└─ [Create] Button"]
+    
+    ContactDecision -->|Prefilled| PrefillContact["Use Prefilled<br/>Contact"]
+    
+    ContactDecision -->|None| NoContact["No Contact"]
+    
+    UseAccountContact --> GetContactDetails["Get Contact<br/>Details"]
+    
+    TypeaheadContact --> GetContactDetails
+    
+    PhoneContact --> GetContactDetails
+    
+    CreateContact --> CreateContactRecord["Create Contact<br/><br/>Assignments:<br/>├─ LastName<br/>├─ Phone = var_DynamicPhone ✅<br/>├─ Email<br/>├─ AccountId ← Lookup ✅<br/>└─ RecordType"]
+    
+    CreateContactRecord --> GetContactDetails
+    
+    PrefillContact --> GetContactDetails
+    
+    NoContact --> GetContactDetails
+    
+    GetContactDetails --> PopulateFields["Populate Case<br/>Fields"]
+    
+    PopulateFields --> VoiceCallCheck{Voice Call<br/>Processing?}
+    
+    VoiceCallCheck -->|Yes| ProcessVoice["Process Voice<br/>Call Record"]
+    
+    VoiceCallCheck -->|No| ReviewCase
+    
+    ProcessVoice --> ReviewCase{Review Case<br/>Summary}
+    
+    ReviewCase -->|Confirm| CreateCase["Create Case<br/>Record"]
+    
+    ReviewCase -->|Edit| CaseScreen
+    
+    CreateCase --> LogOutput["Log Case ID<br/>(Output)"]
+    
+    LogOutput --> Success([Success<br/>Case Created])
+    
+    CaseScreen -->|Error| FaultHandler["Capture Fault<br/>Message"]
+    
+    FaultHandler --> ErrorScreen["Screen: Error<br/>Display"]
+    
+    ErrorScreen --> End([Error<br/>End])
+    
+    %% STYLING
+    classDef start fill:#00aa44,stroke:#00cc66,color:#fff,stroke-width:3px
+    classDef screen fill:#0066cc,stroke:#0044aa,color:#fff,stroke-width:2px
+    classDef screenRequired fill:#ff6699,stroke:#ff0044,color:#fff,stroke-width:3px
+    classDef decision fill:#ffaa00,stroke:#ff8800,color:#000,stroke-width:2px
+    classDef action fill:#9966ff,stroke:#6600cc,color:#fff,stroke-width:2px
+    classDef success fill:#00aa44,stroke:#00cc66,color:#fff,stroke-width:2px
+    classDef error fill:#cc0000,stroke:#ff0000,color:#fff,stroke-width:2px
+    classDef new fill:#ff3366,stroke:#ff0044,color:#fff,stroke-width:3px
+    classDef neutral fill:#666,stroke:#444,color:#fff,stroke-width:2px
+    classDef skip fill:#cccccc,stroke:#999999,color:#000,stroke-width:2px
+    
+    class Start start
+    class CaseScreen screen
+    class Screen_EndUser_Opt_Search_NoAsset,Screen_EndUser_Opt_Search_Asset screenRequired
+    class SearchEU_NoAsset,SearchEU_Asset screen
+    class CreateContact screenRequired
+    class Decision1,CheckEUMatch,ContactDecision,VoiceCallCheck decision
+    class UseAccountContact,TypeaheadContact,PhoneContact,PrefillContact action
+    class CreateEU_NoAsset,CreateEU_Asset,AssignEU_NoAsset,AssignEU_Asset new
+    class CreateContactRecord new
+    class GetContactDetails,PopulateFields action
+    class SkipEUScreen skip
+    class Success success
+    class ErrorScreen,End error
