@@ -62,7 +62,7 @@
         <fields>
             <name>Case_Description</name>
             <fieldText>Description</fieldText>
-            <fieldType>LargeTextAreaField</fieldType>
+            <fieldType>InputField</fieldType>
             <isRequired>false</isRequired>
         </fields>
         <fields>
