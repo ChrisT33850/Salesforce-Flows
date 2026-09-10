@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Get Business Unit values from org settings</description>
+        <name>GetBU</name>
+        <label>Get BU Values</label>
+        <locationX>270</locationX>
+        <locationY>100</locationY>
+        <actionName>apex_getBusinessUnits</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>GetVoiceCallInfo</targetReference>
+        </connector>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Extract Voice Call information</description>
+        <name>GetVoiceCallInfo</name>
+        <label>Get Voice Call Info</label>
+        <locationX>270</locationX>
+        <locationY>150</locationY>
+        <actionName>apex_getVoiceCallMetadata</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>AssignDynamicPhone</targetReference>
+        </connector>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <assignments>
+        <description>Dynamically assign phone based on call type (Inbound=Caller, Outbound=Recipient)</description>
+        <name>AssignDynamicPhone</name>
+        <label>Assign Dynamic Phone</label>
+        <locationX>270</locationX>
+        <locationY>200</locationY>
+        <assignmentItems>
+            <assignToReference>var_DynamicPhone</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>IF({!GetVoiceCallInfo.CallType}="Inbound",{!GetVoiceCallInfo.CallerPhone},{!GetVoiceCallInfo.RecipientPhone})</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Screen_Case_Details</targetReference>
+        </connector>
+    </assignments>
+    <screens>
+        <description>Collect case information</description>
+        <name>Screen_Case_Details</name>
+        <label>Screen: Case Details</label>
+        <locationX>270</locationX>
+        <locationY>250</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Case_Subject</name>
+            <fieldText>Subject</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>true</isRequired>
+        </fields>
+        <fields>
+            <name>Case_Description</name>
+            <fieldText>Description</fieldText>
+            <fieldType>LargeTextAreaField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Case_AssetRequired</name>
+            <fieldText>Is Asset Required?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <choices>
+                <choice>Yes</choice>
+                <choice>No</choice>
+            </choices>
+        </fields>
+        <connector>
+            <targetReference>D_AssetRequired</targetReference>
+        </connector>
+    </screens>
+    <decisions>
+        <description>Check if Asset is required</description>
+        <name>D_AssetRequired</name>
+        <label>Asset Required?</label>
+        <locationX>270</locationX>
+        <locationY>300</locationY>
+        <defaultConnectorLabel>No Asset</defaultConnectorLabel>
+        <rules>
+            <name>R_AssetYes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Case_AssetRequired</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Yes</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Screen_AssetPicker</targetReference>
+            </connector>
+            <label>Yes, Asset Required</label>
+        </rules>
+    </decisions>
+    <screens>
+        <description>Search and select Asset</description>
+        <name>Screen_AssetPicker</name>
+        <label>Screen: Asset Picker</label>
+        <locationX>450</locationX>
+        <locationY>300</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Asset_Lookup</name>
+            <fieldText>Search Assets</fieldText>
+            <fieldType>LookupField</fieldType>
+            <isRequired>true</isRequired>
+            <objectApiName>Asset</objectApiName>
+            <fieldApiName>Id</fieldApiName>
+        </fields>
+        <connector>
+            <targetReference>Get_RootAsset</targetReference>
+        </connector>
+    </screens>
+    <recordLookups>
+        <description>Get Root Asset and its owner information</description>
+        <name>Get_RootAsset</name>
+        <label>Get Root Asset</label>
+        <locationX>450</locationX>
+        <locationY>350</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>D_EUMatchCheck</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Asset_Lookup</elementReference>
+            </value>
+        </filters>
+        <object>Asset</object>
+        <outputAssignments>
+            <assignToReference>var_AssetOwnerId</assignToReference>
+            <field>AccountId</field>
+        </outputAssignments>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>AccountId</queriedFields>
+    </recordLookups>
+    <decisions>
+        <description>Check if Asset Owner Account matches Contact End User</description>
+        <name>D_EUMatchCheck</name>
+        <label>End User Match Check?</label>
+        <locationX>450</locationX>
+        <locationY>400</locationY>
+        <defaultConnectorLabel>No Match - Show EU Screen</defaultConnectorLabel>
+        <rules>
+            <name>R_EUMatch</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>var_AssetOwnerId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>var_ContactEndUserId</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Skip_EUScreen</targetReference>
+            </connector>
+            <label>Yes, Match - Skip Screen</label>
+        </rules>
+    </decisions>
+    <assignments>
+        <description>Skip EU Screen - already matched</description>
+        <name>Skip_EUScreen</name>
+        <label>Skip EU Screen</label>
+        <locationX>550</locationX>
+        <locationY>400</locationY>
+        <assignmentItems>
+            <assignToReference>var_EndUserAccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>var_AssetOwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Screen_EndUserOptionalSearch_Asset</targetReference>
+        </connector>
+    </assignments>
+    <screens>
+        <description>End User Optional Search - REQUIRED (No Asset Path)</description>
+        <name>Screen_EndUserOptionalSearch_NoAsset</name>
+        <label>Screen: End User Optional Search (No Asset)</label>
+        <locationX>100</locationX>
+        <locationY>350</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>EU_Choice_NoAsset</name>
+            <fieldText>End User Action</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <choices>
+                <choice>Search Existing Account</choice>
+                <choice>Create New Account</choice>
+            </choices>
+        </fields>
+        <fields>
+            <name>EU_Lookup_NoAsset</name>
+            <fieldText>Search End User Account</fieldText>
+            <fieldType>LookupField</fieldType>
+            <isRequired>false</isRequired>
+            <objectApiName>Account</objectApiName>
+            <fieldApiName>Id</fieldApiName>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_NoAsset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Search Existing Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>EU_CreateAccountName_NoAsset</name>
+            <fieldText>Account Name</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_NoAsset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Create New Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>EU_CreateEmail_NoAsset</name>
+            <fieldText>Email</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_NoAsset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Create New Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <connector>
+            <targetReference>D_EUChoice_NoAsset</targetReference>
+        </connector>
+    </screens>
+    <decisions>
+        <description>Decide if Search or Create End User</description>
+        <name>D_EUChoice_NoAsset</name>
+        <label>End User Choice (No Asset)</label>
+        <locationX>100</locationX>
+        <locationY>400</locationY>
+        <defaultConnectorLabel>Search</defaultConnectorLabel>
+        <rules>
+            <name>R_Create_NoAsset</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>EU_Choice_NoAsset</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Create New Account</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_EndUserAccount_NoAsset</targetReference>
+            </connector>
+            <label>Create New Account</label>
+        </rules>
+    </decisions>
+    <recordCreates>
+        <description>Create End User Account (No Asset Path)</description>
+        <name>Create_EndUserAccount_NoAsset</name>
+        <label>Create End User Account</label>
+        <locationX>100</locationX>
+        <locationY>450</locationY>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>EU_CreateAccountName_NoAsset</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Email__c</field>
+            <value>
+                <elementReference>EU_CreateEmail_NoAsset</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <stringValue>01224000000Rq0uAAC</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <connector>
+            <targetReference>Assign_EndUserAccountId_NoAsset</targetReference>
+        </connector>
+    </recordCreates>
+    <assignments>
+        <description>Assign created Account ID to variable</description>
+        <name>Assign_EndUserAccountId_NoAsset</name>
+        <label>Assign End User Account ID</label>
+        <locationX>100</locationX>
+        <locationY>500</locationY>
+        <assignmentItems>
+            <assignToReference>var_EndUserAccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Create_EndUserAccount_NoAsset.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_EndUserAccount_NoAsset</targetReference>
+        </connector>
+    </assignments>
+    <recordLookups>
+        <description>Get End User Account Details</description>
+        <name>Get_EndUserAccount_NoAsset</name>
+        <label>Get End User Account</label>
+        <locationX>100</locationX>
+        <locationY>550</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Screen_ContactSource</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>var_EndUserAccountId</elementReference>
+            </value>
+        </filters>
+        <object>Account</object>
+        <outputAssignments>
+            <assignToReference>var_ContactEndUserId</assignToReference>
+            <field>Id</field>
+        </outputAssignments>
+        <queriedFields>Id</queriedFields>
+    </recordLookups>
+    <screens>
+        <description>End User Optional Search - REQUIRED (Asset Mismatch Path)</description>
+        <name>Screen_EndUserOptionalSearch_Asset</name>
+        <label>Screen: End User Optional Search (Asset Mismatch)</label>
+        <locationX>450</locationX>
+        <locationY>450</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>EU_Choice_Asset</name>
+            <fieldText>End User Action</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <choices>
+                <choice>Search Existing Account</choice>
+                <choice>Create New Account</choice>
+            </choices>
+        </fields>
+        <fields>
+            <name>EU_Lookup_Asset</name>
+            <fieldText>Search End User Account</fieldText>
+            <fieldType>LookupField</fieldType>
+            <isRequired>false</isRequired>
+            <objectApiName>Account</objectApiName>
+            <fieldApiName>Id</fieldApiName>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_Asset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Search Existing Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>EU_CreateAccountName_Asset</name>
+            <fieldText>Account Name</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_Asset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Create New Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>EU_CreateEmail_Asset</name>
+            <fieldText>Email</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>EU_Choice_Asset</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <stringValue>Create New Account</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <connector>
+            <targetReference>D_EUChoice_Asset</targetReference>
+        </connector>
+    </screens>
+    <decisions>
+        <description>Decide if Search or Create End User (Asset Path)</description>
+        <name>D_EUChoice_Asset</name>
+        <label>End User Choice (Asset)</label>
+        <locationX>450</locationX>
+        <locationY>500</locationY>
+        <defaultConnectorLabel>Search</defaultConnectorLabel>
+        <rules>
+            <name>R_Create_Asset</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>EU_Choice_Asset</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Create New Account</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_EndUserAccount_Asset</targetReference>
+            </connector>
+            <label>Create New Account</label>
+        </rules>
+    </decisions>
+    <recordCreates>
+        <description>Create End User Account (Asset Path)</description>
+        <name>Create_EndUserAccount_Asset</name>
+        <label>Create End User Account</label>
+        <locationX>450</locationX>
+        <locationY>550</locationY>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>EU_CreateAccountName_Asset</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Email__c</field>
+            <value>
+                <elementReference>EU_CreateEmail_Asset</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <stringValue>01224000000Rq0uAAC</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <connector>
+            <targetReference>Assign_EndUserAccountId_Asset</targetReference>
+        </connector>
+    </recordCreates>
+    <assignments>
+        <description>Assign created Account ID to variable</description>
+        <name>Assign_EndUserAccountId_Asset</name>
+        <label>Assign End User Account ID</label>
+        <locationX>450</locationX>
+        <locationY>600</locationY>
+        <assignmentItems>
+            <assignToReference>var_EndUserAccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Create_EndUserAccount_Asset.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_EndUserAccount_Asset</targetReference>
+        </connector>
+    </assignments>
+    <recordLookups>
+        <description>Get End User Account Details</description>
+        <name>Get_EndUserAccount_Asset</name>
+        <label>Get End User Account</label>
+        <locationX>450</locationX>
+        <locationY>650</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Screen_ContactSource</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>var_EndUserAccountId</elementReference>
+            </value>
+        </filters>
+        <object>Account</object>
+        <outputAssignments>
+            <assignToReference>var_ContactEndUserId</assignToReference>
+            <field>Id</field>
+        </outputAssignments>
+        <queriedFields>Id</queriedFields>
+    </recordLookups>
+    <screens>
+        <description>Contact source selection</description>
+        <name>Screen_ContactSource</name>
+        <label>Screen: Contact Source</label>
+        <locationX>270</locationX>
+        <locationY>600</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Contact_Source</name>
+            <fieldText>How should we find the Contact?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <choices>
+                <choice>Use Account Contact</choice>
+                <choice>Search Contact</choice>
+                <choice>Create New Contact</choice>
+            </choices>
+        </fields>
+        <connector>
+            <targetReference>D_ContactSource</targetReference>
+        </connector>
+    </screens>
+    <decisions>
+        <description>Route based on contact source</description>
+        <name>D_ContactSource</name>
+        <label>Contact Source</label>
+        <locationX>270</locationX>
+        <locationY>650</locationY>
+        <defaultConnectorLabel>Search Contact</defaultConnectorLabel>
+        <rules>
+            <name>R_CreateNewContact</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Contact_Source</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Create New Contact</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Screen_CreateContact</targetReference>
+            </connector>
+            <label>Create New Contact</label>
+        </rules>
+    </decisions>
+    <screens>
+        <description>Create new Contact with Account lookup and dynamic phone</description>
+        <name>Screen_CreateContact</name>
+        <label>Screen: Create Contact</label>
+        <locationX>100</locationX>
+        <locationY>700</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Contact_AccountLookup</name>
+            <fieldText>Account (Required)</fieldText>
+            <fieldType>LookupField</fieldType>
+            <isRequired>true</isRequired>
+            <objectApiName>Account</objectApiName>
+            <fieldApiName>Id</fieldApiName>
+        </fields>
+        <fields>
+            <name>Contact_LastName</name>
+            <fieldText>Last Name (Required)</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>true</isRequired>
+        </fields>
+        <fields>
+            <name>Contact_Phone</name>
+            <fieldText>Phone</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <value>
+                <elementReference>var_DynamicPhone</elementReference>
+            </value>
+        </fields>
+        <fields>
+            <name>Contact_Email</name>
+            <fieldText>Email</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <connector>
+            <targetReference>Create_ContactRecord</targetReference>
+        </connector>
+    </screens>
+    <recordCreates>
+        <description>Create Contact record with Account and dynamic phone</description>
+        <name>Create_ContactRecord</name>
+        <label>Create Contact Record</label>
+        <locationX>100</locationX>
+        <locationY>750</locationY>
+        <inputAssignments>
+            <field>LastName</field>
+            <value>
+                <elementReference>Contact_LastName</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Phone</field>
+            <value>
+                <elementReference>var_DynamicPhone</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Email</field>
+            <value>
+                <elementReference>Contact_Email</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <elementReference>Contact_AccountLookup</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <connector>
+            <targetReference>Get_ContactDetails</targetReference>
+        </connector>
+    </recordCreates>
+    <recordLookups>
+        <description>Get Contact details for confirmation</description>
+        <name>Get_ContactDetails</name>
+        <label>Get Contact Details</label>
+        <locationX>270</locationX>
+        <locationY>800</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Screen_CaseReview</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Create_ContactRecord.Id</elementReference>
+            </value>
+        </filters>
+        <object>Contact</object>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Name</queriedFields>
+        <queriedFields>Email</queriedFields>
+        <queriedFields>Phone</queriedFields>
+    </recordLookups>
+    <screens>
+        <description>Review case summary before creation</description>
+        <name>Screen_CaseReview</name>
+        <label>Screen: Review Case</label>
+        <locationX>270</locationX>
+        <locationY>850</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Review_Message</name>
+            <fieldText>Please review the case details and click Finish to create the case.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <connector>
+            <targetReference>Create_Case</targetReference>
+        </connector>
+    </screens>
+    <recordCreates>
+        <description>Create Case record with all details</description>
+        <name>Create_Case</name>
+        <label>Create Case</label>
+        <locationX>270</locationX>
+        <locationY>900</locationY>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>Case_Subject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description</field>
+            <value>
+                <elementReference>Case_Description</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ContactId</field>
+            <value>
+                <elementReference>Create_ContactRecord.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+        <storeOutputAutomaticallyObject>true</storeOutputAutomaticallyObject>
+        <connector>
+            <targetReference>Success</targetReference>
+        </connector>
+    </recordCreates>
+    <screens>
+        <description>Success screen</description>
+        <name>Success</name>
+        <label>Success</label>
+        <locationX>270</locationX>
+        <locationY>950</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+        <fields>
+            <name>Success_Message</name>
+            <fieldText>Case created successfully!</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+    </screens>
+    <variables>
+        <description>Dynamic phone number based on call type</description>
+        <name>var_DynamicPhone</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>End User Account ID</description>
+        <name>var_EndUserAccountId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>Contact End User ID</description>
+        <name>var_ContactEndUserId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>Asset Owner ID</description>
+        <name>var_AssetOwnerId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <description>Case Intake Flow V4 - Complete with End User Required, Account Lookup, and Dynamic Phone</description>
+    <interviewLabel>Case Intake Flow V4</interviewLabel>
+    <isTemplate>false</isTemplate>
+    <label>Screen_Sub_Case_Intake_Core V4</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_ENABLED</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <start>
+        <locationX>270</locationX>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>GetBU</targetReference>
+        </connector>
+    </start>
+    <status>Draft</status>
+</Flow>
