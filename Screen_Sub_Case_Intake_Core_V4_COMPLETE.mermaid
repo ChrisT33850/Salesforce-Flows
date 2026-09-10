@@ -156,3 +156,33 @@ graph TD
     class SkipEUScreen skip
     class Success success
     class ErrorScreen,End error
+    
+    %% ═══════════════════════════════════════════════════════════════════
+    %% LÉGENDE / LEGEND
+    %% ═══════════════════════════════════════════════════════════════════
+    
+    subgraph LEGEND["🔑 LÉGENDE / LEGEND"]
+        L1["<span style='color:#fff'>🟢 START/SUCCESS<br/>Démarrage/Fin réussie</span>"]:::start
+        L2["<span style='color:#fff'>🔵 SCREEN<br/>Écran de saisie (standard)</span>"]:::screen
+        L3["<span style='color:#fff'>🔴 SCREEN REQUIRED ⭐<br/>Écran obligatoire (new)</span>"]:::screenRequired
+        L4["<span style='color:#000'>🟡 DECISION<br/>Logique conditionnelle</span>"]:::decision
+        L5["<span style='color:#fff'>🟣 ACTION<br/>Assignation/Lookup</span>"]:::action
+        L6["<span style='color:#fff'>🆕 NEW/CREATE ⭐<br/>Nouvel élément (V4)</span>"]:::new
+        L7["<span style='color:#fff'>⏭️ SKIP<br/>Passer (logique optimization)</span>"]:::skip
+        L8["<span style='color:#fff'>❌ ERROR<br/>Gestion erreur</span>"]:::error
+    end
+    
+    subgraph CHANGES["📋 CHANGEMENTS CLÉS / KEY CHANGES"]
+        C1["✅ var_DynamicPhone<br/>Phone auto-rempli: Inbound=Caller, Outbound=Recipient"]:::new
+        C2["✅ End User REQUIRED ⭐<br/>Pas de path optionnel (obligatoire)"]:::screenRequired
+        C3["✅ Account Lookup REQUIRED<br/>Obligatoire lors création Contact"]:::new
+        C4["✅ Asset Owner Check<br/>Skip écran si déjà matché"]:::action
+        C5["✅ Contact Mapping<br/>Phone + AccountId auto-assignés"]:::new
+    end
+    
+    subgraph FLOWS["🌊 FLUX / FLOWS"]
+        F1["PATH A: No Asset<br/>→ End User REQUIRED"]:::screen
+        F2["PATH B: Asset Match<br/>→ SKIP EU Screen"]:::skip
+        F3["PATH C: Asset Mismatch<br/>→ End User REQUIRED"]:::screenRequired
+        F4["CONVERGENCE<br/>→ Contact Creation"]:::action
+    end
